@@ -13,6 +13,7 @@ namespace MSetExplorer
 
 		event EventHandler<MapViewUpdateRequestedEventArgs>? MapViewUpdateRequested;
 		event EventHandler<MapViewUpdateCompletedEventArgs>? MapViewUpdateCompleted;
+		event EventHandler<MapViewReportCoordEventArgs>? MapViewReportCoord;
 
 		event EventHandler<DisplaySettingsInitializedEventArgs>? DisplaySettingsInitialized;
 
@@ -34,6 +35,7 @@ namespace MSetExplorer
 
 		void RaiseMapViewZoomUpdate(AreaSelectedEventArgs e);
 		void RaiseMapViewPanUpdate(ImageDraggedEventArgs e);
+		void RaiseMapViewCoordReport(MapViewReportCoordEventArgs e);
 
 		MsrJob? SubmitJob(AreaColorAndCalcSettings newValue);
 		void SubmitJob(AreaColorAndCalcSettings newValue, SizeDbl posterSize, VectorDbl displayPosition, double displayZoom);

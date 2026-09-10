@@ -97,6 +97,8 @@ namespace MSetExplorer
 
 		public event EventHandler<DisplaySettingsInitializedEventArgs>? DisplaySettingsInitialized;
 
+		public event EventHandler<MapViewReportCoordEventArgs>? MapViewReportCoord;
+
 		#endregion
 
 		#region Public Properties - Content
@@ -599,6 +601,15 @@ namespace MSetExplorer
 				}
 
 				MapViewUpdateRequested?.Invoke(this, eventArgs);
+			}
+		}
+
+		public void RaiseMapViewCoordReport(MapViewReportCoordEventArgs e)
+		{
+			if (CurrentAreaColorAndCalcSettings != null)
+			{
+				var eventArgs = new MapViewReportCoordEventArgs(e.Position, e.DisplaySize, CurrentAreaColorAndCalcSettings.MapAreaInfo);
+				MapViewReportCoord?.Invoke(this, eventArgs);
 			}
 		}
 

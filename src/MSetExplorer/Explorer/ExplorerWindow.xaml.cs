@@ -67,10 +67,8 @@ namespace MSetExplorer
 			else
 			{
 				_vm.ProjectViewModel.PropertyChanged += ProjectViewModel_PropertyChanged;
-			
-				//_vm.ColorBandSetViewModel.PropertyChanged += ColorBandSetViewModel_PropertyChanged;
 				_vm.CbsHistogramViewModel.PropertyChanged += CbsHistogramViewModel_PropertyChanged;
-				//_vm.CbsHistogramViewModel.ColorBandCutoffChanged += CbshDisplayViewModel_ColorBandCutoffChanged;
+				_vm.MapDisplayViewModel.MapViewReportCoord += MapDisplayViewModel_MapViewReportCoord;
 
 				// Position the Window near the left top.
 				Left = 20;
@@ -78,6 +76,11 @@ namespace MSetExplorer
 
 				Debug.WriteLine("The Explorer Window is now loaded");
 			}
+		}
+
+		private void MapDisplayViewModel_MapViewReportCoord(object? sender, MapViewReportCoordEventArgs e)
+		{
+			Debug.Print($"Received a MapViewReportCoord event. The position is {e.Position.X}, {e.Position.Y}.");
 		}
 
 		private void ExplorerWindow_Unloaded(object sender, RoutedEventArgs e)
@@ -88,10 +91,8 @@ namespace MSetExplorer
 			Unloaded -= ExplorerWindow_Unloaded;
 
 			_vm.ProjectViewModel.PropertyChanged -= ProjectViewModel_PropertyChanged;
-
-			//_vm.ColorBandSetViewModel.PropertyChanged -= ColorBandSetViewModel_PropertyChanged;
 			_vm.CbsHistogramViewModel.PropertyChanged -= CbsHistogramViewModel_PropertyChanged;
-			//_vm.CbsHistogramViewModel.ColorBandCutoffChanged -= CbshDisplayViewModel_ColorBandCutoffChanged;
+			_vm.MapDisplayViewModel.MapViewReportCoord -= MapDisplayViewModel_MapViewReportCoord;
 		}
 
 		private void ExplorerWindow_ContentRendered(object? sender, EventArgs e)

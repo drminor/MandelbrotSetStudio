@@ -65,9 +65,13 @@ namespace MSetExplorer
 
 				_vm.PropertyChanged += MapDisplayViewModel_PropertyChanged;
 
-				_selectionRectangle = new SelectionRectangle(BitmapGridControl1.Canvas, _vm.ViewportSize);
+				var canvas = BitmapGridControl1.Canvas;
+
+				_selectionRectangle = new SelectionRectangle(canvas, _vm.ViewportSize);
 				_selectionRectangle.AreaSelected += SelectionRectangle_AreaSelected;
 				_selectionRectangle.ImageDragged += SelectionRectangle_ImageDragged;
+
+				canvas.MouseRightButtonUp += Canvas_MouseRightButtonUp;
 
 				Debug.WriteLine("The MapSectionDisplay Control is now loaded");
 			}
@@ -82,6 +86,9 @@ namespace MSetExplorer
 				_selectionRectangle.AreaSelected -= SelectionRectangle_AreaSelected;
 				_selectionRectangle.ImageDragged -= SelectionRectangle_ImageDragged;
 				_selectionRectangle.TearDown();
+
+				var canvas = BitmapGridControl1.Canvas;
+				canvas.MouseRightButtonUp -= Canvas_MouseRightButtonUp;
 			}
 		}
 
@@ -138,6 +145,17 @@ namespace MSetExplorer
 		private void SelectionRectangle_ImageDragged(object? sender, ImageDraggedEventArgs e)
 		{
 			_vm.RaiseMapViewPanUpdate(e);
+		}
+
+		private void Canvas_MouseRightButtonUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
+		{
+			var canvas = BitmapGridControl1.Canvas;
+			var pos = e.GetPosition(BitmapGridControl1.Canvas);
+			var posD = ScreenTypeHelper.ConvertToPointDbl(pos);
+			var displaySize = new SizeDbl(canvas.ActualWidth, canvas.ActualHeight);
+			var eventArgs = new MapViewReportCoordEventArgs(posD, displaySize, new MapCenterAndDelta());
+
+			_vm.RaiseMapViewCoordReport(eventArgs);
 		}
 
 		#endregion
