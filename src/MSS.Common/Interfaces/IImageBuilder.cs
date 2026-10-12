@@ -13,5 +13,7 @@ namespace MSS.Common
 
 		Task<bool> BuildAsync(string imageFilePath, ObjectId jobId, OwnerType ownerType, MapPositionSizeAndDelta mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings,
 			bool useEscapeVelocities, CancellationToken ct, Action<double> statusCallBack);
+
+		void Cancel();
 	}
 }

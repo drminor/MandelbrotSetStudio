@@ -149,6 +149,11 @@ namespace ImageBuilderWPF
 			return result;
 		}
 
+		public void Cancel()
+		{
+			// TODO: Implement the Cancel Method on the WmpBuilder.
+		}
+
 		#endregion
 
 		#region Private Methods

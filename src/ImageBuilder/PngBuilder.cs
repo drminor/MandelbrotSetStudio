@@ -1,6 +1,5 @@
 ﻿using MongoDB.Bson;
 using MSS.Common;
-using MSS.Common.MSet;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
@@ -20,6 +19,8 @@ namespace ImageBuilder
 		private readonly MapSectionVectorProvider _mapSectionVectorProvider;
 		private readonly MapSectionBuilder _mapSectionBuilder;
 
+		private MsrJob? _currentMsrJob;
+
 		private AsyncManualResetEvent _blocksForRowAreReady;
 		private int? _currentJobNumber;
 		private IDictionary<int, MapSection>? _mapSectionsForRow;
@@ -37,6 +38,7 @@ namespace ImageBuilder
 			_mapLoaderManager = mapLoaderManager;
 			_mapSectionVectorProvider = mapSectionVectorProvider;
 			_mapSectionBuilder = new MapSectionBuilder();
+			_currentMsrJob = null;
 
 			_blocksForRowAreReady = new AsyncManualResetEvent();
 			_currentJobNumber = null;
@@ -56,7 +58,7 @@ namespace ImageBuilder
 		#region Public Methods
 
 		public async Task<bool> BuildAsync(string imageFilePath, ObjectId jobId, OwnerType ownerType, MapPositionSizeAndDelta mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, bool useEscapeVelocities,
-			CancellationToken ct/*, SynchronizationContext _*/, Action<double> statusCallback)
+			CancellationToken ct, Action<double> statusCallback)
 		{
 			var result = true;
 
@@ -87,10 +89,10 @@ namespace ImageBuilder
 				{
 					// Get all of the blocks for this row.
 					var blockIndexY = blockPtrY - (h / 2);
-					var msrSubJob = _mapLoaderManager.CreateNewCopy(msrJob); // Each row must use a fresh MsrJob.
-					var blocksForThisRow = await GetAllBlocksForRowAsync(msrSubJob, blockPtrY, blockIndexY, _blocksPerRow, ct);
+					_currentMsrJob = _mapLoaderManager.CreateNewCopy(msrJob); // Each row must use a fresh MsrJob.
+					var blocksForThisRow = await GetAllBlocksForRowAsync(_currentMsrJob, blockPtrY, blockIndexY, _blocksPerRow, ct);
 
-					if (ct.IsCancellationRequested || msrSubJob.IsCancelled || blocksForThisRow.Count == 0)
+					if (ct.IsCancellationRequested || _currentMsrJob.IsCancelled || blocksForThisRow.Count == 0)
 					{
 						result = false;
 						break;
@@ -110,7 +112,7 @@ namespace ImageBuilder
 			}
 			catch (Exception e)
 			{
-				if (!ct.IsCancellationRequested)
+				if (!ct.IsCancellationRequested || (_currentMsrJob?.IsCancelled ?? false))
 				{
 					await Task.Delay(10);
 					Debug.WriteLine($"PngBuilder encountered an exception: {e}.");
@@ -119,7 +121,7 @@ namespace ImageBuilder
 			}
 			finally
 			{
-				if (!ct.IsCancellationRequested)
+				if (!ct.IsCancellationRequested || (_currentMsrJob?.IsCancelled ?? false))
 				{
 					pngImage?.End();
 				}
@@ -130,6 +132,14 @@ namespace ImageBuilder
 			}
 
 			return result;
+		}
+
+		public void Cancel()
+		{
+			if (_currentMsrJob != null)
+			{
+				_currentMsrJob.Cancel();
+			}
 		}
 
 		#endregion
@@ -169,7 +179,7 @@ namespace ImageBuilder
 					}
 					catch (Exception e)
 					{
-						if (!ct.IsCancellationRequested)
+						if (!ct.IsCancellationRequested || (_currentMsrJob?.IsCancelled ?? false))
 						{
 							Debug.WriteLine($"FillPngImageLineSegment encountered an exception: {e}.");
 							throw;

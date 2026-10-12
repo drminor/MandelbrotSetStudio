@@ -93,6 +93,7 @@ namespace MSetExplorer
 		public void CancelCreateImage()
 		{
 			_cts.Cancel();
+			_imageBuilder.Cancel();
 
 			if (_task != null)
 			{
